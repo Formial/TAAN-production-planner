@@ -1,173 +1,71 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Formial Production Planner</title>
-<style>
-:root{--bg:#06100b;--card:#0c1d14;--line:#21613d;--green:#56df91;--text:#edf9f1;--muted:#a4bdae}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-main{max-width:1150px;margin:auto;padding:28px 18px 60px}h1{font-size:34px;margin:6px 0}h2{margin:0 0 12px}h3{margin:0}p{color:var(--muted)}
-header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:20px}.tag{color:var(--green);font-size:11px;font-weight:bold;letter-spacing:2px}
-.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.card{background:var(--card);border:1px solid #174b2d;border-radius:15px;padding:18px;margin-top:18px}
-textarea{width:100%;height:235px;background:#05120b;border:1px solid var(--line);border-radius:9px;color:white;padding:12px;font:14px monospace;line-height:1.55}
-button{border:1px solid var(--green);border-radius:8px;background:transparent;color:#d7ffe7;padding:9px 12px;font-weight:bold;cursor:pointer}.primary{background:var(--green);color:#062212}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.error{background:#4b1717;color:#ffb2b2;padding:8px;border-radius:7px;margin-top:8px;font-size:13px}
-.barrow{display:flex;gap:10px;align-items:center;margin:13px 0}.barrow code{width:60px}.bar{height:12px;background:#092316;flex:1;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--green)}.barrow b{width:100px;text-align:right;font-size:13px}
-.master{background:linear-gradient(135deg,#123d28,#0b2015)}.big{font-size:30px;font-weight:bold;color:var(--green)}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:9px 6px;border-bottom:1px solid #215438;text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:11px;text-transform:uppercase}
-.batch{background:#09170f;border:1px solid #205536;border-radius:14px;padding:16px;margin-top:14px}.pill{background:#16452d;color:var(--green);padding:6px 9px;border-radius:20px;font-size:12px;font-weight:bold}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}.step{background:#06110b;padding:10px;border-radius:8px}.step small{display:block;color:var(--muted);font-size:10px}.step b{display:block;margin-top:5px}.check{color:#79efad;font-size:13px;margin-top:12px}
-details{margin-top:18px}input{width:90px;background:#06110b;color:white;border:1px solid var(--line);border-radius:6px;padding:6px}
-@media(max-width:750px){.grid,.steps{grid-template-columns:1fr}}@media print{body{background:white;color:black}.no-print{display:none}.card,.batch{background:white;color:black;border-color:#999}.step{background:#eee}p,small{color:#444!important}}
-</style>
-</head>
-<body>
-<main>
-<header>
-<div class="tag">FORMIAL INTERNAL TOOL · MASTER PREMIX</div>
-<h1>Production Planner</h1>
-<p>Make one master premix with 5% extra reserve. Take only normal premix portions into final batches.</p>
-</header>
-
-<section class="grid no-print">
-<div class="card">
-<div class="top"><h2>Today's formulations</h2><button onclick="example()">Load example</button></div>
-<textarea id="input" oninput="calculate()" placeholder="Paste one formulation per line&#10;Tretinoin 0.015% + Niacinamide 4% + Azelaic Acid 4%"></textarea>
-<div id="errors"></div>
-</div>
-<div class="card">
-<h2>Detected batches</h2>
-<p id="status">Paste formulations to begin.</p>
-<div id="counts"></div>
-</div>
-</section>
-
-<section class="card master">
-<div class="top">
-<div><div class="tag">STEP 1 · MAKE ONCE</div><h2>Master premix</h2><div class="big" id="makeTotal">0 g</div></div>
-<div class="no-print"><button class="primary" onclick="copyReport()">Copy report</button> <button onclick="window.print()">Print / PDF</button></div>
-</div>
-<p>This includes 5% premix cream base for every batch and a further 5% extra reserve for grinding/transfer loss. Tretinoin stock is added separately per final batch.</p>
-<table>
-<thead><tr><th>Ingredient</th><th>Normal required</th><th>Make with 5% extra</th></tr></thead>
-<tbody id="master"></tbody>
-</table>
-</section>
-
-<section>
-<div class="tag" style="margin-top:25px">STEP 2 · MAKE EACH BATCH</div>
-<h2>Individual production batches</h2>
-<div id="batches"></div>
-</section>
-
-<details class="card no-print">
-<summary><b>Settings</b></summary>
-<p>Defaults: AA 4%, Niacinamide 4%, EDTA 0.1%, BHT 0.1%, SMB 0.1%, Transcutol 4%, premix cream base 5%, loss allowance 5%.</p>
-<p>Premix cream base %: <input id="base" type="number" value="5" onchange="calculate()">
-Loss allowance %: <input id="loss" type="number" value="5" onchange="calculate()"></p>
-</details>
-</main>
-
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Production Planner</title><style>
+:root{--navy:#12476b;--blue:#247ed0;--sky:#eaf3fb;--ink:#102c48;--muted:#627d95;--line:#cadbe9;--good:#187a55;--white:#fff}*{box-sizing:border-box}body{margin:0;background:var(--sky);font-family:Arial,sans-serif;color:var(--ink)}.top{background:var(--navy);color:#fff;padding:27px max(22px,calc((100% - 1150px)/2));font-size:25px;font-weight:700}.wrap{max-width:1150px;margin:auto;padding:34px 20px 70px}.hero h1{font-size:32px;margin:0 0 7px}.hero p,.note,.small{color:var(--muted)}.settings,.entry,.group,.pick{background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:22px;padding:20px}.settings summary{cursor:pointer;font-weight:bold;font-size:16px}.fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:15px}.fields label{font-size:12px;color:var(--muted)}input,textarea{width:100%;border:1px solid #adc6db;border-radius:7px;padding:8px;color:var(--ink);font:inherit}textarea{height:215px;padding:13px;font:14px/1.55 monospace;resize:vertical}button{border:0;border-radius:7px;background:var(--blue);color:#fff;padding:10px 15px;font-weight:bold;cursor:pointer;margin-top:12px}button:hover{background:#176ab1}.light{background:#eef5fc;color:#185582;border:1px solid #bad4e9}.error{margin-top:9px;padding:10px;background:#fdeaea;color:#a12727;border-radius:6px;font-size:13px}.chooser,.planner{display:none}.chooser h2{margin:0}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-top:15px}.card{border:1px solid var(--line);background:#fff;border-radius:9px;padding:16px;text-align:left;margin:0;color:var(--ink)}.card:hover,.card.selected{border-color:var(--blue);background:#f4f9fe}.card b{display:block;font-size:16px;margin-bottom:5px}.card span{display:block;color:var(--muted);font-size:13px}.badge{display:inline-block;margin-top:10px;background:#e6f1fb;color:#175080;border-radius:16px;padding:5px 9px;font-size:12px}.grouphead{display:flex;justify-content:space-between;align-items:start;gap:15px}.group h2{margin:0}.print{margin:0}.block{border:1px solid var(--line);border-radius:9px;margin-top:15px;overflow:hidden}.block>summary{cursor:pointer;padding:16px;font-weight:bold;list-style:none}.block>summary::-webkit-details-marker,.batch summary::-webkit-details-marker{display:none}.block>summary:after{content:"+";float:right;font-size:21px;color:var(--blue)}.block[open]>summary:after{content:"−"}.inside{padding:0 16px 16px;border-top:1px solid var(--line)}table{width:100%;border-collapse:collapse;margin-top:11px;font-size:14px}th,td{padding:10px 7px;border-bottom:1px solid #dce7ef;text-align:left}th:last-child,td:last-child{text-align:right}th{font-size:11px;color:var(--muted);text-transform:uppercase}.total{background:#f0f6fb;font-weight:bold}.batch{border:1px solid var(--line);border-radius:8px;margin-top:10px;overflow:hidden}.batch summary{padding:15px;cursor:pointer;font-weight:bold;list-style:none;display:flex;justify-content:space-between;gap:10px}.batch summary:after{content:"Open batch";font-size:13px;color:var(--blue)}.batch[open] summary:after{content:"Close batch"}.check{background:#e6f7ee;color:var(--good);padding:10px;border-radius:6px;margin-top:12px;font-size:13px}@media(max-width:700px){.top{padding:21px}.hero h1{font-size:27px}.fields,.cards{grid-template-columns:1fr}}@media print{body{background:#fff}.top,.hero,.settings,.entry,.chooser,.no-print{display:none!important}.planner{display:block!important}.group{margin:0;border:0;padding:0}.block[open] .inside,.batch[open] .inside{display:block}.print{display:none}}
+</style></head><body><div class="top">Production Planner</div><main class="wrap"><section class="hero"><h1>Today's production</h1><p>Paste formulations, choose a formula group, then prepare its premix and batches.</p></section>
+<details class="settings"><summary>Settings</summary><p class="small">Update only against the approved master batch record. The solvent is calculated automatically as total non-Tretinoin APIs divided by the solvent divisor.</p><div id="fields" class="fields"></div><button class="light" onclick="resetSettings()">Restore defaults</button></details>
+<section class="entry no-print"><h2 style="margin-top:0">Paste today's formulations</h2><textarea id="input" placeholder="Tretinoin 0.018% + Niacinamide 4% + Azelaic Acid 4%
+Tretinoin 0.025% + Clindamycin 1% + Spironolactone 5%
+Tretinoin 0.025% + Azelaic Acid 4% + Kojic Acid 2% + Tranexamic Acid 5%
+Tretinoin 0.015% + Hydroquinone 4% + Kojic Acid 2%"></textarea><br><button onclick="process()">Process formulations</button><div id="errors"></div></section>
+<section id="chooser" class="chooser pick"><h2>Choose a formulation premix</h2><p class="note">Each card is a separate premix. Select one to continue.</p><div id="cards" class="cards"></div></section><section id="planner" class="planner"></section></main>
 <script>
-const cfg={aa:4,na:4,edta:.1,bht:.1,smb:.1,trans:4,one:20,extra:15,stock:1};
-let batches=[];
-
-const g=n=>(+n).toFixed(n<1?3:2).replace(/\.?0+$/,"")+" g";
-const ml=n=>(+n).toFixed(2).replace(/\.?0+$/,"")+" mL";
-
-function parse(){
- return input.value.split(/\r?\n/).map((line,i)=>{
-  let m=line.match(/tret(?:inoin)?\s*[:\-]?\s*(0?\.\d+)\s*%?/i);
-  let s=m?+m[1]:null;
-  let err=line.trim()&&(!/tret/i.test(line)?"Missing Tretinoin":!m?"Missing Tretinoin strength":s<.001||s>.1?"Strength should be 0.001% to 0.1%":null);
-  return {i,s:err?null:s,err};
- });
-}
-
-function calculate(){
- let lines=parse(),count={};
- lines.forEach(x=>{if(x.s!==null)count[x.s]=(count[x.s]||0)+1});
- let basePct=+base.value||5;
-
- batches=Object.entries(count).map(([strength,customers])=>{
-  strength=+strength; customers=+customers;
-  let batch=customers===1?cfg.one:cfg.one*2+(customers-2)*cfg.extra;
-  let items={
-   "Azelaic Acid":batch*cfg.aa/100,
-   "Niacinamide":batch*cfg.na/100,
-   "EDTA":batch*cfg.edta/100,
-   "BHT":batch*cfg.bht/100,
-   "Sodium Metabisulphite":batch*cfg.smb/100,
-   "Transcutol":batch*cfg.trans/100,
-   "Premix Cream Base":batch*basePct/100
-  };
-  let premix=Object.values(items).reduce((a,b)=>a+b,0);
-  let tretActive=batch*strength/100;
-  let stockMl=tretActive/(cfg.stock/100);
-  let remaining=batch-premix-stockMl;
-  return {strength,customers,batch,items,premix,tretActive,stockMl,remaining};
- }).sort((a,b)=>a.strength-b.strength);
-
- render(lines);
-}
-
-function render(lines){
- let bad=lines.filter(x=>x.err);
- errors.innerHTML=bad.map(x=>`<div class="error">Line ${x.i+1}: ${x.err}</div>`).join("");
- status.textContent=`${lines.filter(x=>x.s!==null).length} valid formulations · ${batches.length} production batches`;
- counts.innerHTML=batches.map(b=>`<div class="barrow"><code>${b.strength}%</code><div class="bar"><i style="width:${Math.min(100,b.customers*15)}%"></i></div><b>${b.customers} customer${b.customers===1?"":"s"}</b></div>`).join("");
-
- let totals={"Azelaic Acid":0,"Niacinamide":0,"EDTA":0,"BHT":0,"Sodium Metabisulphite":0,"Transcutol":0,"Premix Cream Base":0};
- batches.forEach(b=>Object.keys(totals).forEach(k=>totals[k]+=b.items[k]));
- let normal=Object.values(totals).reduce((a,b)=>a+b,0);
- let factor=1+(+loss.value||5)/100;
- makeTotal.textContent=g(normal*factor)+" to make";
-
- master.innerHTML=Object.entries(totals).map(([k,v])=>
-  `<tr><td>${k}</td><td>${g(v)}</td><td>${g(v*factor)}</td></tr>`).join("")+
-  `<tr><th>Total master premix</th><th>${g(normal)}</th><th>${g(normal*factor)}</th></tr>`+
-  `<tr><td>Extra reserve</td><td>${loss.value||5}%</td><td>${g(normal*factor-normal)}</td></tr>`;
-
- batchesEl=batches.map(b=>{
-  let check=b.premix+b.stockMl+b.remaining;
-  return `<article class="batch">
-   <div class="top"><div><h3>Taan ${b.strength}%</h3><p>${b.customers} customers · ${g(b.batch)} final batch</p></div><span class="pill">Take ${g(b.premix)} normal premix</span></div>
-   <div class="steps">
-    <div class="step"><small>1. FROM MASTER PREMIX</small><b>${g(b.premix)}</b></div>
-    <div class="step"><small>2. TRET STOCK 1%</small><b>${ml(b.stockMl)}</b><small>${g(b.tretActive)} active Tret</small></div>
-    <div class="step"><small>3. REMAINING CREAM BASE</small><b>${g(b.remaining)}</b></div>
-    <div class="step"><small>4. FINAL BATCH</small><b>${g(b.batch)}</b></div>
-   </div>
-   <div class="check">Exact check: ${g(b.premix)} premix + ${g(b.stockMl)} stock + ${g(b.remaining)} cream base = ${g(check)}</div>
-  </article>`;
- }).join("");
- document.getElementById("batches").innerHTML=batchesEl||'<div class="card"><p>No valid batches yet.</p></div>';
-}
-
-function example(){
- input.value=[
- "Tretinoin 0.015% + Niacinamide 4% + Azelaic Acid 4%",
- "Tretinoin 0.015% + Niacinamide 4% + Azelaic Acid 4%",
- "Tretinoin 0.015% + Niacinamide 4% + Azelaic Acid 4%",
- "Tretinoin 0.015% + Niacinamide 4% + Azelaic Acid 4%",
- "Tretinoin 0.025% + Niacinamide 4% + Azelaic Acid 4%",
- "Tretinoin 0.025% + Niacinamide 4% + Azelaic Acid 4%",
- "Tretinoin 0.035% + Niacinamide 4% + Azelaic Acid 4%"
- ].join("\n");
- calculate();
-}
-
-function copyReport(){
- let text="FORMIAL MASTER PREMIX PRODUCTION SHEET\n\n";
- batches.forEach(b=>{
-  text+=`TAAN ${b.strength}% | ${b.customers} customers | ${g(b.batch)}\n`;
-  text+=`Take premix: ${g(b.premix)}\nAdd Tret stock: ${ml(b.stockMl)}\nAdd remaining cream base: ${g(b.remaining)}\n\n`;
- });
- navigator.clipboard.writeText(text);
-}
-
-calculate();
+const D={aa:4,na:4,hq:4,kojic:2,txa:5,clinda:1,spiro:5,edta:.1,bht:.1,smb:.1,premixBase:5,reserve:5,solventDivisor:2,one:20,extra:15,stockPct:1};
+let S={},all={},active="";
+try{S={...D,...JSON.parse(localStorage.getItem("formial-v2-settings")||"{}")}}catch(e){S={...D}}
+const SET=[["aa","Azelaic Acid %"],["na","Niacinamide %"],["hq","Hydroquinone %"],["kojic","Kojic Acid %"],["txa","Tranexamic Acid %"],["clinda","Clindamycin %"],["spiro","Spironolactone %"],["edta","EDTA %"],["bht","BHT %"],["smb","SMB %"],["premixBase","Premix cream base %"],["reserve","Premix reserve %"],["solventDivisor","Solvent divisor"],["stockPct","Tret stock %"],["one","1 customer batch g"],["extra","Extra g after 2 customers"]];
+const F=[
+ {id:"TAKT",short:"TAKT",name:"Tretinoin + Azelaic Acid + Kojic Acid + Tranexamic Acid",test:/tranexamic/i,solvent:"Transcutol-P",ingredients:()=>({"Azelaic Acid":S.aa,"Kojic Acid":S.kojic,"Tranexamic Acid":S.txa,"EDTA":S.edta,"BHT":S.bht,"Sodium Metabisulphite":S.smb})},
+ {id:"THQK",short:"THQK",name:"Tretinoin + Hydroquinone + Kojic Acid",test:/hydroquinone/i,solvent:"Transcutol-P",ingredients:()=>({"Hydroquinone":S.hq,"Kojic Acid":S.kojic,"BHT":S.bht,"Sodium Metabisulphite":S.smb})},
+ {id:"TCS",short:"TCS",name:"Tretinoin + Clindamycin + Spironolactone",test:/clindamycin|spironolactone/i,solvent:"Propylene Glycol",ingredients:()=>({"Clindamycin":S.clinda,"Spironolactone":S.spiro,"BHT":S.bht,"Sodium Metabisulphite":S.smb})},
+ {id:"TAAN",short:"TAAN",name:"Tretinoin + Azelaic Acid + Niacinamide",test:/azelaic/i,solvent:"Transcutol-P",ingredients:()=>({"Azelaic Acid":S.aa,"Niacinamide":S.na,"EDTA":S.edta,"BHT":S.bht,"Sodium Metabisulphite":S.smb})}
+];
+const g=n=>(+n).toFixed(n<1?3:2).replace(/\.?0+$/,"")+" g",ml=n=>(+n).toFixed(2).replace(/\.?0+$/,"")+" mL",batchSize=n=>n==1?S.one:n==2?S.one*2:S.one*2+(n-2)*S.extra;
+function showSettings(){fields.innerHTML=SET.map(([k,l])=>'<label>'+l+'<input id="s_'+k+'" type="number" step=".01" min="0" value="'+S[k]+'"></label>').join("")}function readSettings(){SET.forEach(([k])=>S[k]=Math.max(0,+document.getElementById("s_"+k).value||0));localStorage.setItem("formial-v2-settings",JSON.stringify(S))}function resetSettings(){S={...D};localStorage.removeItem("formial-v2-settings");showSettings()}
+function formula(line){return F.find(f=>f.test.test(line))}
+function process(){readSettings();all={};active="";planner.innerHTML="";planner.style.display="none";let bad=[];input.value.split(/\r?\n/).filter(x=>x.trim()).forEach((line,i)=>{let t=line.match(/tret(?:inoin)?\s*(0?\.\d+)\s*%?/i),f=formula(line);if(!t||!f){bad.push("Line "+(i+1)+": unsupported formula or missing Tretinoin %.");return}let key=f.id+"|"+t[1];all[key]??={f,str:+t[1],n:0};all[key].n++});errors.innerHTML=bad.map(x=>'<div class="error">'+x+'</div>').join("");let by={};Object.values(all).forEach(x=>(by[x.f.id]??=[]).push(calc(x)));all=by;cards.innerHTML=Object.values(all).map(list=>{let f=list[0].f,n=list.reduce((a,b)=>a+b.n,0);return '<button class="card" onclick="selectGroup(\''+f.id+'\')"><b>'+f.short+'</b><span>'+f.name+'</span><i class="badge">'+n+' formulation'+(n==1?"":"s")+' · '+list.length+' batch'+(list.length==1?"":"es")+'</i></button>'}).join("");chooser.style.display=Object.keys(all).length?"block":"none"}
+function calc(x){let w=batchSize(x.n),core=x.f.ingredients(),items={};Object.entries(core).forEach(([k,p])=>items[k]=w*p/100);let apiTotal=Object.entries(core).filter(([k])=>!["EDTA","BHT","Sodium Metabisulphite"].includes(k)).reduce((a,[,p])=>a+w*p/100,0);items[x.f.solvent]=apiTotal/S.solventDivisor;items["Premix Cream Base"]=w*S.premixBase/100;let premix=Object.values(items).reduce((a,b)=>a+b,0),active=w*x.str/100,stock=active/(S.stockPct/100),cb=w-premix-stock;return {...x,w,items,premix,stock,cb}}
+function selectGroup(id){active=id;document.querySelectorAll(".card").forEach(x=>x.classList.remove("selected"));let list=all[id];planner.innerHTML=makePlanner(list);planner.style.display="block";planner.scrollIntoView({behavior:"smooth",block:"start"})}
+function makePlanner(list){let f=list[0].f,total={};list.forEach(b=>Object.entries(b.items).forEach(([k,v])=>total[k]=(total[k]||0)+v));let normal=Object.values(total).reduce((a,b)=>a+b,0),factor=1+S.reserve/100;return '<section class="group"><div class="grouphead"><div><span class="badge">'+f.short+'</span><h2 style="margin:8px 0 4px">'+f.name+'</h2><p class="small">Separate premix for this formulation only.</p></div><button class="print no-print" onclick="window.print()">Print this plan</button></div><details class="block" open><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts are based on the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+Object.entries(total).map(([k,v])=>'<tr><td>'+k+'</td><td>'+g(v)+'</td><td>'+g(v*factor)+'</td></tr>').join('')+'<tr class="total"><td>Total master premix</td><td>'+g(normal)+'</td><td>'+g(normal*factor)+'</td></tr></tbody></table></div></details><details class="block" open><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>'}
+function batchHTML(b){let check=b.premix+b.stock+b.cb;return '<details class="batch"><summary><span>Tretinoin '+b.str+'% - '+b.n+' customer'+(b.n==1?"":"s")+'</span><span>'+g(b.w)+' final</span></summary><div class="inside"><table><thead><tr><th>Add to this batch</th><th>Quantity</th></tr></thead><tbody><tr><td>Take from this premix</td><td>'+g(b.premix)+'</td></tr><tr><td>Tretinoin stock solution</td><td>'+ml(b.stock)+'</td></tr><tr><td>Remaining cream base</td><td>'+g(b.cb)+'</td></tr><tr class="total"><td>Final batch</td><td>'+g(b.w)+'</td></tr></tbody></table><div class="check">Check: '+g(b.premix)+' premix + '+g(b.stock)+' stock + '+g(b.cb)+' cream base = '+g(check)+'</div></div></details>'}
+showSettings();
 </script>
-</body>
-</html>
+<style>
+#detail{display:none}.detailbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}.detailactions{display:flex;gap:8px;flex-wrap:wrap}.detailactions button{margin:0}
+@media(max-width:700px){.detailbar{display:block}.detailactions{margin-top:10px}}
+@media print{#detail{display:block!important}.detailbar,.top,.hero,.settings,.entry,.chooser,.planner,.no-print{display:none!important}body[data-print="premix"] .batches-block{display:none!important}body[data-print="batches"] .premix-block{display:none!important}}
+</style>
+<script>
+/* Final navigation, Clear, and separated print controls. */
+const detail=document.createElement("section");detail.id="detail";document.querySelector("main").append(detail);
+const clearBtn=document.createElement("button");clearBtn.className="light";clearBtn.textContent="Clear";clearBtn.onclick=clearAll;
+document.querySelector(".entry button").after(clearBtn);
+const mainParts=[document.querySelector(".hero"),document.querySelector(".settings"),document.querySelector(".entry"),chooser];
+
+function clearAll(){
+ input.value="";errors.innerHTML="";all={};active="";chooser.style.display="none";
+ planner.style.display="none";planner.innerHTML="";detail.style.display="none";detail.innerHTML="";
+ mainParts.forEach(x=>x.style.display="");window.scrollTo({top:0,behavior:"smooth"});
+}
+function selectGroup(id){
+ active=id;detail.innerHTML=makePlanner(all[id]);
+ mainParts.forEach(x=>x.style.display="none");planner.style.display="none";detail.style.display="block";
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function backToDashboard(){
+ detail.style.display="none";detail.innerHTML="";
+ mainParts.forEach(x=>x.style.display="");window.scrollTo({top:0,behavior:"smooth"});
+}
+function printOnly(kind){
+ document.body.dataset.print=kind;window.print();
+ window.onafterprint=()=>{delete document.body.dataset.print;window.onafterprint=null};
+}
+function makePlanner(list){
+ let f=list[0].f,total={};list.forEach(b=>Object.entries(b.items).forEach(([k,v])=>total[k]=(total[k]||0)+v));
+ let normal=Object.values(total).reduce((a,b)=>a+b,0),factor=1+S.reserve/100;
+ return '<div class="detailbar no-print"><button class="light" onclick="backToDashboard()">← Back to dashboard</button><div class="detailactions"><button class="light" onclick="printOnly(\'premix\')">Print premix</button><button onclick="printOnly(\'batches\')">Print batches</button></div></div>'+
+ '<section class="group"><div class="grouphead"><div><span class="badge">'+f.short+'</span><h2 style="margin:8px 0 4px">'+f.name+'</h2><p class="small">Separate premix for this formulation only.</p></div></div>'+
+ '<details class="block premix-block" open><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts follow the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+
+ Object.entries(total).map(([k,v])=>'<tr><td>'+k+'</td><td>'+g(v)+'</td><td>'+g(v*factor)+'</td></tr>').join('')+
+ '<tr class="total"><td>Total master premix</td><td>'+g(normal)+'</td><td>'+g(normal*factor)+'</td></tr></tbody></table></div></details>'+
+ '<details class="block batches-block" open><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>';
+}
+</script></body></html>
