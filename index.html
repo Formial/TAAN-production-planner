@@ -52,7 +52,8 @@ function selectGroup(id){
 }
 function backToDashboard(){
  detail.style.display="none";detail.innerHTML="";
- mainParts.forEach(x=>x.style.display="");window.scrollTo({top:0,behavior:"smooth"});
+ mainParts.forEach(x=>x.style.display="");chooser.style.display=Object.keys(all).length?"block":"none";
+ window.scrollTo({top:0,behavior:"smooth"});
 }
 function printOnly(kind){
  document.body.dataset.print=kind;window.print();
@@ -63,9 +64,9 @@ function makePlanner(list){
  let normal=Object.values(total).reduce((a,b)=>a+b,0),factor=1+S.reserve/100;
  return '<div class="detailbar no-print"><button class="light" onclick="backToDashboard()">← Back to dashboard</button><div class="detailactions"><button class="light" onclick="printOnly(\'premix\')">Print premix</button><button onclick="printOnly(\'batches\')">Print batches</button></div></div>'+
  '<section class="group"><div class="grouphead"><div><span class="badge">'+f.short+'</span><h2 style="margin:8px 0 4px">'+f.name+'</h2><p class="small">Separate premix for this formulation only.</p></div></div>'+
- '<details class="block premix-block" open><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts follow the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+
+ '<details class="block premix-block"><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts follow the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+
  Object.entries(total).map(([k,v])=>'<tr><td>'+k+'</td><td>'+g(v)+'</td><td>'+g(v*factor)+'</td></tr>').join('')+
  '<tr class="total"><td>Total master premix</td><td>'+g(normal)+'</td><td>'+g(normal*factor)+'</td></tr></tbody></table></div></details>'+
- '<details class="block batches-block" open><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>';
+ '<details class="block batches-block"><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>';
 }
 </script></body></html>
