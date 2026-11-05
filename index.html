@@ -26,7 +26,16 @@ function formula(line){return F.find(f=>f.test.test(line))}
 function process(){readSettings();all={};active="";planner.innerHTML="";planner.style.display="none";let bad=[];input.value.split(/\r?\n/).filter(x=>x.trim()).forEach((line,i)=>{let t=line.match(/tret(?:inoin)?\s*(0?\.\d+)\s*%?/i),f=formula(line);if(!t||!f){bad.push("Line "+(i+1)+": unsupported formula or missing Tretinoin %.");return}let key=f.id+"|"+t[1];all[key]??={f,str:+t[1],n:0};all[key].n++});errors.innerHTML=bad.map(x=>'<div class="error">'+x+'</div>').join("");let by={};Object.values(all).forEach(x=>(by[x.f.id]??=[]).push(calc(x)));all=by;cards.innerHTML=Object.values(all).map(list=>{let f=list[0].f,n=list.reduce((a,b)=>a+b.n,0);return '<button class="card" onclick="selectGroup(\''+f.id+'\')"><b>'+f.short+'</b><span>'+f.name+'</span><i class="badge">'+n+' formulation'+(n==1?"":"s")+' · '+list.length+' batch'+(list.length==1?"":"es")+'</i></button>'}).join("");chooser.style.display=Object.keys(all).length?"block":"none"}
 function calc(x){let w=batchSize(x.n),core=x.f.ingredients(),items={};Object.entries(core).forEach(([k,p])=>items[k]=w*p/100);let apiTotal=Object.entries(core).filter(([k])=>!["EDTA","BHT","Sodium Metabisulphite"].includes(k)).reduce((a,[,p])=>a+w*p/100,0);items[x.f.solvent]=apiTotal/S.solventDivisor;items["Premix Cream Base"]=w*S.premixBase/100;let premix=Object.values(items).reduce((a,b)=>a+b,0),active=w*x.str/100,stock=active/(S.stockPct/100),cb=w-premix-stock;return {...x,w,items,premix,stock,cb}}
 function selectGroup(id){active=id;document.querySelectorAll(".card").forEach(x=>x.classList.remove("selected"));let list=all[id];planner.innerHTML=makePlanner(list);planner.style.display="block";planner.scrollIntoView({behavior:"smooth",block:"start"})}
-function makePlanner(list){let f=list[0].f,total={};list.forEach(b=>Object.entries(b.items).forEach(([k,v])=>total[k]=(total[k]||0)+v));let normal=Object.values(total).reduce((a,b)=>a+b,0),factor=1+S.reserve/100;return '<section class="group"><div class="grouphead"><div><span class="badge">'+f.short+'</span><h2 style="margin:8px 0 4px">'+f.name+'</h2><p class="small">Separate premix for this formulation only.</p></div><button class="print no-print" onclick="window.print()">Print this plan</button></div><details class="block" open><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts are based on the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+Object.entries(total).map(([k,v])=>'<tr><td>'+k+'</td><td>'+g(v)+'</td><td>'+g(v*factor)+'</td></tr>').join('')+'<tr class="total"><td>Total master premix</td><td>'+g(normal)+'</td><td>'+g(normal*factor)+'</td></tr></tbody></table></div></details><details class="block" open><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>'}
+function makePlanner(list){
+ let f=list[0].f,total={};list.forEach(b=>Object.entries(b.items).forEach(([k,v])=>total[k]=(total[k]||0)+v));
+ let factor=1+S.reserve/100;
+ let entries=Object.entries(total).map(([k,v])=>({k,normalReq:v,makeAmt:v*factor}));
+ let normalSum=entries.reduce((a,b)=>a++(b.normalReq.toFixed(3)),0);
+ let makeSum=entries.reduce((a,b)=>a++(b.makeAmt.toFixed(3)),0);
+ return '<section class="group"><div class="grouphead"><div><span class="badge">'+f.short+'</span><h2 style="margin:8px 0 4px">'+f.name+'</h2><p class="small">Separate premix for this formulation only.</p></div><button class="print no-print" onclick="window.print()">Print this plan</button></div><details class="block" open><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts are based on the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+
+ entries.map(e=>'<tr><td>'+e.k+'</td><td>'+g(e.normalReq)+'</td><td>'+g(e.makeAmt)+'</td></tr>').join('')+
+ '<tr class="total"><td>Total master premix</td><td>'+g(normalSum)+'</td><td>'+g(makeSum)+'</td></tr></tbody></table></div></details><details class="block" open><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>';
+}
 function batchHTML(b){let check=b.premix+b.stock+b.cb;return '<details class="batch"><summary><span>Tretinoin '+b.str+'% - '+b.n+' customer'+(b.n==1?"":"s")+'</span><span>'+g(b.w)+' final</span></summary><div class="inside"><table><thead><tr><th>Add to this batch</th><th>Quantity</th></tr></thead><tbody><tr><td>Take from this premix</td><td>'+g(b.premix)+'</td></tr><tr><td>Tretinoin stock solution</td><td>'+ml(b.stock)+'</td></tr><tr><td>Remaining cream base</td><td>'+g(b.cb)+'</td></tr><tr class="total"><td>Final batch</td><td>'+g(b.w)+'</td></tr></tbody></table><div class="check">Check: '+g(b.premix)+' premix + '+g(b.stock)+' stock + '+g(b.cb)+' cream base = '+g(check)+'</div></div></details>'}
 showSettings();
 </script>
@@ -63,12 +72,15 @@ function printOnly(kind){
 }
 function makePlanner(list){
  let f=list[0].f,total={};list.forEach(b=>Object.entries(b.items).forEach(([k,v])=>total[k]=(total[k]||0)+v));
- let normal=Object.values(total).reduce((a,b)=>a+b,0),factor=1+S.reserve/100;
+ let factor=1+S.reserve/100;
+ let entries=Object.entries(total).map(([k,v])=>({k,normalReq:v,makeAmt:v*factor}));
+ let normalSum=entries.reduce((a,b)=>a++(b.normalReq.toFixed(3)),0);
+ let makeSum=entries.reduce((a,b)=>a++(b.makeAmt.toFixed(3)),0);
  return '<div class="detailbar no-print"><button class="light" onclick="backToDashboard()">← Back to dashboard</button><div class="detailactions"><button class="light" onclick="printOnly(\'premix\')">Print premix</button><button onclick="printOnly(\'batches\')">Print batches</button></div></div>'+
  '<section class="group"><div class="grouphead"><div><span class="badge">'+f.short+'</span><h2 style="margin:8px 0 4px">'+f.name+'</h2><p class="small">Separate premix for this formulation only.</p></div></div>'+
  '<details class="block premix-block"><summary>Step 1: Make premix</summary><div class="inside"><p class="note">Solvent: '+f.solvent+'. Ingredient amounts follow the active-ingredient total and current Settings.</p><table><thead><tr><th>Ingredient</th><th>Normal required</th><th>Make amount</th></tr></thead><tbody>'+
- Object.entries(total).map(([k,v])=>'<tr><td>'+k+'</td><td>'+g(v)+'</td><td>'+g(v*factor)+'</td></tr>').join('')+
- '<tr class="total"><td>Total master premix</td><td>'+g(normal)+'</td><td>'+g(normal*factor)+'</td></tr></tbody></table></div></details>'+
+ entries.map(e=>'<tr><td>'+e.k+'</td><td>'+g(e.normalReq)+'</td><td>'+g(e.makeAmt)+'</td></tr>').join('')+
+ '<tr class="total"><td>Total master premix</td><td>'+g(normalSum)+'</td><td>'+g(makeSum)+'</td></tr></tbody></table></div></details>'+
  '<details class="block batches-block"><summary>Step 2: Make batches</summary><div class="inside">'+list.sort((a,b)=>a.str-b.str).map(batchHTML).join("")+'</div></details></section>';
 }
 </script></body></html>
