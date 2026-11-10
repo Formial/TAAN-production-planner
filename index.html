@@ -46,26 +46,27 @@ function parseCustomLine(line) {
       let name = match[1].trim();
       let pct = parseFloat(match[2]);
       ingredients[name] = pct;
-      apiTotal += pct;
+      apiTotal += pct; // sum of pure APIs
       if(/azelaic/i.test(name)) hasAzelaic = true;
     }
   });
 
+  // Solvent is pure API total divided by 2
+  let solventPct = apiTotal / 2;
+  let solventName = "Transcutol-P";
+  ingredients[solventName] = solventPct;
+
   // Add standard excipients
   ingredients["BHT"] = S.bht;
   ingredients["Sodium Metabisulphite"] = S.smb;
-  apiTotal += S.bht + S.smb;
+  let totalWithExcipients = apiTotal + solventPct + S.bht + S.smb;
 
   if (hasAzelaic) {
     ingredients["EDTA"] = S.edta;
-    apiTotal += S.edta;
+    totalWithExcipients += S.edta;
   }
 
-  let solventPct = apiTotal / 2;
-  let solventName = "Transcutol-P";
-  let creamBasePct = Math.max(0, 100 - apiTotal - solventPct);
-
-  ingredients[solventName] = solventPct;
+  let creamBasePct = Math.max(0, 100 - totalWithExcipients);
   ingredients["Cream Base"] = creamBasePct;
 
   return { line, ingredients, apiTotal, solventName };
