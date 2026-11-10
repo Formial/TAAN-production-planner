@@ -38,6 +38,8 @@ function parseCustomLine(line) {
   let parts = line.split("+").map(p => p.trim());
   let ingredients = {};
   let apiTotal = 0;
+  let hasAzelaic = false;
+
   parts.forEach(part => {
     let match = part.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*%?$/i);
     if (match) {
@@ -45,13 +47,27 @@ function parseCustomLine(line) {
       let pct = parseFloat(match[2]);
       ingredients[name] = pct;
       apiTotal += pct;
+      if(/azelaic/i.test(name)) hasAzelaic = true;
     }
   });
+
+  // Add standard excipients
+  ingredients["BHT"] = S.bht;
+  ingredients["Sodium Metabisulphite"] = S.smb;
+  apiTotal += S.bht + S.smb;
+
+  if (hasAzelaic) {
+    ingredients["EDTA"] = S.edta;
+    apiTotal += S.edta;
+  }
+
   let solventPct = apiTotal / 2;
   let solventName = "Transcutol-P";
   let creamBasePct = Math.max(0, 100 - apiTotal - solventPct);
+
   ingredients[solventName] = solventPct;
   ingredients["Cream Base"] = creamBasePct;
+
   return { line, ingredients, apiTotal, solventName };
 }
 function process(){
@@ -164,7 +180,7 @@ function makeCustomPlanner(c){
  '<details class="block" open><summary>Batch Preparation ('+c.n+' customer'+(c.n==1?"":"s")+' · '+g(w)+' final)</summary><div class="inside">'+
  '<table><thead><tr><th>Ingredient</th><th>Percentage</th><th>Quantity</th></tr></thead><tbody>'+
  entries.map(e=>'<tr><td>'+e.k+'</td><td>'+e.pct+'%</td><td>'+g(e.amt)+'</td></tr>').join('')+
- '<tr class="total"><td>Total Batch Weight</td><td>100%</td><td>'+g(totalAmt)+'</td></tr>'+
+ '<tr class="total"><td>Total Batch Weight</td><td>-</td><td>'+g(totalAmt)+'</td></tr>'+
  '</tbody></table>'+
  '<div class="check">Check: Total batch weight = '+g(totalAmt)+'</div>'+
  '</div></details></section>';
